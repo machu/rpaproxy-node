@@ -7,8 +7,8 @@ var Schema = mongoose.Schema
 
 var ProxySchema = new Schema({
   name: String,
-  endpoint: String,
-  locales: { type: Array, index: true },
+  endpoint: { type: String, required: true },
+  locales: { type: Array, required: true, index: true },
   success: { type: Number, default: 0 },
   failure: { type: Number, default: 0 },
   valid: Boolean
