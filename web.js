@@ -42,21 +42,21 @@ app.param('locale', function(req, res, next, locale) {
 });
 
 app.get('/rpaproxy/:locale', function(req, res) {
-  // TODO: $BE,@Z$J%i%&%s%I%m%S%s(B
+  // TODO: 適切なラウンドロビン
   Proxy
     .find({ locales: req.locale })
     .run(function(err, proxies) {
       if (err) {
         return res.send("Error", 500);
       }
-      // proxy$B<B9T!u%A%'%C%/!u@.8y!&<:GT5-O?(B
+      // proxy実行＆チェック＆成功・失敗記録
       async.until(
-        // $B%k!<%W7QB3H=Dj(B
+        // ループ継続判定
         function() {
           console.log("check");
           return (proxies.length == 0 || res.statusCode == 302);
         },
-        // $B%k!<%W=hM}(B
+        // ループ処理
         function(callback) {
           console.log("do");
           var proxy = proxies.shift();
@@ -69,32 +69,32 @@ app.get('/rpaproxy/:locale', function(req, res) {
           console.log("connecting to: " + options.host + options.path);
           http.get(options, function(proxy_res) {
             if (proxy_res.headers.location && proxy_res.statusCode == 302) {
-              // $B%l%9%]%s%9%X%C%@@_Dj(B
+              // レスポンスヘッダ設定
               res.statusCode = 302;
               res.setHeader('location', proxy_res.headers.location);
-              // TODO: $B@.8y2s?t$rA}J,!JHsF14|=hM}!K(B
+              // TODO: 成功回数を増分（非同期処理）
             } else {
-              // TODO: $B<:GT2s?t$rA}J,!JHsF14|=hM}!K(B
+              // TODO: 失敗回数を増分（非同期処理）
             }
             callback();
           }).on('error', function(err) {
             console.log("http proxy error: ");
             console.log(util.inspect(err));
-            // TODO: $B<:GT2s?t$rA}J,(B
+            // TODO: 失敗回数を増分
             callback();
           });
         },
-        // $B8e=hM}(B
+        // 後処理
         function(err) {
           if (err) {
-            // $BNc30=hM}(B
+            // 例外処理
             console.log(util.inspect(err));
             return res.send(err.message, 500);
           }
           if (res.statusCode != 302) {
             return res.send("not found available proxy", 503)
           }
-          // $B@5>o=*N;(B
+          // 正常終了
           console.log("finished");
           res.statusCode = 200; // for debug
           res.send(res.getHeader('location')); // for debug
